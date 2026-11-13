@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 乒乓球模型（规格说明）：φ40mm、2.7g、restitution 0.9、纯色视觉无贴图。
+     动态模型；世界内以 ball_00..ball_23 命名复用（<include><name>ball_00</name>）。
+     由离线参数化脚本生成；可直接替换覆盖。 -->
+<sdf version="1.10">
+  <model name="pingpong_ball">
+    <static>false</static>
+    <self_collide>false</self_collide>
+    <allow_auto_disable>false</allow_auto_disable>
+    <link name="link">
+      <inertial>
+        <mass>0.0027</mass>
+        <inertia>
+          <ixx>0.000000432</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000000432</iyy>
+          <iyz>0</iyz>
+          <izz>0.000000432</izz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <geometry>
+          <sphere><radius>0.02</radius></sphere>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.25</mu>
+              <mu2>0.25</mu2>
+            </ode>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0.9</restitution_coefficient>
+            <threshold>0.001</threshold>
+          </bounce>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <sphere><radius>0.02</radius></sphere>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.92 1</ambient>
+          <diffuse>0.95 0.95 0.92 1</diffuse>
+          <specular>0.15 0.15 0.15 1</specular>
+          <emissive>0.06 0.06 0.06 1</emissive>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

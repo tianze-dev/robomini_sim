@@ -1,0 +1,227 @@
+<?xml version="1.0" ?>
+<!--
+  robomini.sdf — ROBOMINI 自瞄仿真平台世界文件
+
+  组成：
+    * robomini_field    Blender 场地总装 1.1 → Gazebo 静态模型（asset-field）
+    * energy_rune       双面五靶能量机关（asset-rune-launcher）
+    * launcher_blue/red 乒乓球发射架（asset-rune-launcher），装在云台放置台上
+    * ball_00..ball_23  乒乓球池（停放区在场地外的 ball_park 容器里）
+    * librobomini_sim_system.so  C++ 系统插件（gz-plugins）：机关转速/灯效/命中/云台/发射
+    * media_cam         观察者相机（验收截图/演示用，topic /media_cam/image）
+
+  坐标约定：Z 向上、米制、场地地面 z=0；
+  蓝方在 -Y 侧（发射架 (0,-2.07,0.31) 朝 +Y），红方在 +Y 侧。
+
+  运行前需要：
+    export GZ_SIM_RESOURCE_PATH=$SIM/assets/models
+    export GZ_SIM_SYSTEM_PLUGIN_PATH=$SIM/gz_plugins/install/lib
+    gz sim -s -r 加上 headless 参数  worlds/robomini.sdf
+-->
+<sdf version="1.10">
+  <world name="robomini">
+
+    <physics name="default_physics" default="true" type="dart">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <!-- pitch_link IMU（200 Hz），供云台节点生成 GimbalToVision.q；
+         这是仿真内部传感器，不属于视觉↔云台算法接口。 -->
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+
+    <!-- ===================== ROBOMINI 自瞄规则插件 ===================== -->
+    <plugin filename="librobomini_sim_system.so" name="robomini::sim::RobominiSim">
+      <publish_rate>20</publish_rate>
+      <state_include_stamp>true</state_include_stamp>
+      <ball_count>24</ball_count>
+      <fire_rate>3.0</fire_rate>
+      <muzzle_offset>0.025</muzzle_offset>
+      <target_radius>0.35</target_radius>
+      <plate_diameter>0.195</plate_diameter>
+      <plate_thickness>0.022</plate_thickness>
+      <rune_axis_blue>0 -0.116 0.928</rune_axis_blue>
+      <rune_axis_red>0 0.116 0.928</rune_axis_red>
+      <default_fire_speed>12.0</default_fire_speed>
+      <ball_trace>false</ball_trace>
+      <!-- 云台前馈伺服：速度命令的加速度限幅默认值
+           rad/s²；实际限幅取 max(|前馈加速度|, 本值) -->
+      <max_yaw_accel>300</max_yaw_accel>
+      <max_pitch_accel>300</max_pitch_accel>
+    </plugin>
+
+    <!-- 主光源：模拟场馆顶灯（无头渲染也用于相机照明） -->
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 20 0 0 0</pose>
+      <diffuse>0.92 0.92 0.92 1</diffuse>
+      <specular>0.25 0.25 0.25 1</specular>
+      <direction>-0.45 0.35 -0.85</direction>
+    </light>
+    <light type="directional" name="fill">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 20 0 0 0</pose>
+      <diffuse>0.35 0.36 0.42 1</diffuse>
+      <specular>0.0 0.0 0.0 1</specular>
+      <direction>0.5 -0.45 -0.75</direction>
+    </light>
+    <scene>
+      <ambient>0.45 0.45 0.45 1</ambient>
+      <background>0.55 0.62 0.72 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- ===================== 场地 ===================== -->
+    <include>
+      <uri>model://robomini_field</uri>
+      <pose>0 0 0 0 0 0</pose>
+      <name>robomini_field</name>
+    </include>
+
+    <!-- ===================== 能量机关（双面五靶） ===================== -->
+    <include>
+      <uri>model://energy_rune</uri>
+      <pose>0 0 0 0 0 0</pose>
+      <name>energy_rune</name>
+    </include>
+
+    <!-- ===================== 发射架（双方） ===================== -->
+    <include>
+      <uri>model://launcher</uri>
+      <pose>0 -2.07 0.31 0 0 0</pose>
+      <name>launcher_blue</name>
+    </include>
+    <include>
+      <uri>model://launcher</uri>
+      <pose>0 2.07 0.31 0 0 3.14159265</pose>
+      <name>launcher_red</name>
+    </include>
+
+    <!-- ===================== 乒乓球停放区（场地外，视觉上不影响比赛） ===================== -->
+    <model name="ball_park">
+      <static>true</static>
+      <pose>10 10 -2.0 0 0 0</pose>
+      <link name="park_link">
+        <visual name="floor_visual">
+          <pose>0 0 -0.02 0 0 0</pose>
+          <geometry><box><size>1.2 0.8 0.04</size></box></geometry>
+          <material><ambient>0.15 0.15 0.15 1</ambient><diffuse>0.15 0.15 0.15 1</diffuse></material>
+        </visual>
+        <collision name="floor_collision">
+          <pose>0 0 -0.02 0 0 0</pose>
+          <geometry><box><size>1.2 0.8 0.04</size></box></geometry>
+                  <surface>
+            <friction><ode><mu>1.5</mu><mu2>1.5</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.0</restitution_coefficient></bounce>
+          </surface>
+</collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.6 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.04 0.8 0.3</size></box></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.6 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.04 0.8 0.3</size></box></geometry>
+                  <surface>
+            <friction><ode><mu>1.5</mu><mu2>1.5</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.0</restitution_coefficient></bounce>
+          </surface>
+</collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.6 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.04 0.8 0.3</size></box></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.6 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.04 0.8 0.3</size></box></geometry>
+                  <surface>
+            <friction><ode><mu>1.5</mu><mu2>1.5</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.0</restitution_coefficient></bounce>
+          </surface>
+</collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0 -0.4 0.15 0 0 0</pose>
+          <geometry><box><size>1.2 0.04 0.3</size></box></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0 -0.4 0.15 0 0 0</pose>
+          <geometry><box><size>1.2 0.04 0.3</size></box></geometry>
+                  <surface>
+            <friction><ode><mu>1.5</mu><mu2>1.5</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.0</restitution_coefficient></bounce>
+          </surface>
+</collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0 0.4 0.15 0 0 0</pose>
+          <geometry><box><size>1.2 0.04 0.3</size></box></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+        <collision name="wall_y_pos_collision">
+          <pose>0 0.4 0.15 0 0 0</pose>
+          <geometry><box><size>1.2 0.04 0.3</size></box></geometry>
+                  <surface>
+            <friction><ode><mu>1.5</mu><mu2>1.5</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.0</restitution_coefficient></bounce>
+          </surface>
+</collision>
+      </link>
+    </model>
+
+    <!-- ===================== 乒乓球池：停放在 ball_park 内（6x4 网格） ===================== -->
+    <!-- ball_00 .. ball_23，插件按初始位姿记为 home，发射/回收都用它 -->
+    <include><uri>model://pingpong_ball</uri><name>ball_00</name><pose>9.55 9.76 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_01</name><pose>9.73 9.76 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_02</name><pose>9.91 9.76 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_03</name><pose>10.09 9.76 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_04</name><pose>10.27 9.76 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_05</name><pose>10.45 9.76 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_06</name><pose>9.55 9.92 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_07</name><pose>9.73 9.92 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_08</name><pose>9.91 9.92 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_09</name><pose>10.09 9.92 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_10</name><pose>10.27 9.92 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_11</name><pose>10.45 9.92 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_12</name><pose>9.55 10.08 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_13</name><pose>9.73 10.08 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_14</name><pose>9.91 10.08 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_15</name><pose>10.09 10.08 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_16</name><pose>10.27 10.08 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_17</name><pose>10.45 10.08 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_18</name><pose>9.55 10.24 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_19</name><pose>9.73 10.24 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_20</name><pose>9.91 10.24 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_21</name><pose>10.09 10.24 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_22</name><pose>10.27 10.24 -1.97 0 0 0</pose></include>
+    <include><uri>model://pingpong_ball</uri><name>ball_23</name><pose>10.45 10.24 -1.97 0 0 0</pose></include>
+
+    <!-- ===================== 观察者相机（验收/演示用） ===================== -->
+    <model name="media_cam">
+      <static>true</static>
+      <pose>0.9 -2.8 1.5 0 0.201 1.884</pose>
+      <link name="link">
+        <sensor name="media_camera" type="camera">
+          <topic>/media_cam/image</topic>
+          <always_on>true</always_on>
+          <visualize>false</visualize>
+          <update_rate>15</update_rate>
+          <camera>
+            <horizontal_fov>1.15</horizontal_fov>
+            <image><width>1280</width><height>720</height><format>R8G8B8</format></image>
+            <clip><near>0.05</near><far>100</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+
+
+  </world>
+</sdf>

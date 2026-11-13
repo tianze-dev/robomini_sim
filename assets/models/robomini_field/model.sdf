@@ -1,0 +1,216 @@
+<?xml version="1.0" ?>
+<!--
+  robomini_field: 机甲杯场地静态模型（离线 CAD 导出）
+  由离线 CAD 导出工具生成，勿手改。
+  坐标：世界坐标 == Blender matrix_world，Z 向上，米制；地面 z=0，主场地外廓
+        X∈[-2.501,2.500]，Y∈[-2.25,2.25]；云台放置台台面 z=0.31，中心 (0,±2.07)。
+  碰撞：简化 primitive（地板/护栏/平台台体，保证高速球不穿透）
+        + 原网格碰撞（主场地细节/高地台阶斜坡/兑换框/支架/能量单元）。
+  视觉：按 语义分组×材质 拆分的 OBJ 网格，颜色由本文件 <material> 控制。
+-->
+<sdf version="1.10">
+  <model name="robomini_field">
+    <static>true</static>
+    <link name="field_link">
+      <!-- ===== 碰撞：简化 primitive（精确尺寸，防高速穿透） ===== -->
+        <collision name="floor_box">
+          <pose>-0.000528 0.000000 -0.025000 0 0 0</pose>
+          <geometry><box><size>5.001056 4.500000 0.050000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="rail_x_neg">
+          <pose>-2.486100 0.000000 0.100000 0 0 0</pose>
+          <geometry><box><size>0.030000 4.500000 0.200000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="rail_x_pos">
+          <pose>2.486100 0.000000 0.100000 0 0 0</pose>
+          <geometry><box><size>0.030000 4.500000 0.200000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="rail_y_neg">
+          <pose>-0.000528 -2.236000 0.100000 0 0 0</pose>
+          <geometry><box><size>5.001000 0.030000 0.200000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="rail_y_pos">
+          <pose>-0.000528 2.236000 0.100000 0 0 0</pose>
+          <geometry><box><size>5.001000 0.030000 0.200000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="platform_blue_box">
+          <pose>0.000000 -2.070000 0.155000 0 0 0</pose>
+          <geometry><box><size>0.300000 0.300000 0.310000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="platform_red_box">
+          <pose>0.000000 2.070000 0.155000 0 0 0</pose>
+          <geometry><box><size>0.300000 0.300000 0.310000</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+      <!-- ===== 碰撞：网格（场地细节 / 高地 / 杂物） ===== -->
+        <collision name="ground_mesh">
+          <geometry><mesh><uri>model://robomini_field/meshes/collision_ground.obj</uri></mesh></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="highland_mesh">
+          <geometry><mesh><uri>model://robomini_field/meshes/collision_highland.obj</uri></mesh></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="platforms_mesh">
+          <geometry><mesh><uri>model://robomini_field/meshes/collision_platforms.obj</uri></mesh></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+        <collision name="props_mesh">
+          <geometry><mesh><uri>model://robomini_field/meshes/collision_props.obj</uri></mesh></geometry>
+          <surface>
+            <friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction>
+            <bounce><restitution_coefficient>0.7</restitution_coefficient></bounce>
+          </surface>
+        </collision>
+      <!-- ===== 视觉：按材质控色的 OBJ 网格 ===== -->
+        <visual name="energy_unit_dark">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_energy_unit_dark.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.0553 0.0553 0.0553 1</ambient>
+            <diffuse>0.0723 0.0723 0.0723 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="energy_unit_white">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_energy_unit_white.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.3800 0.3800 1</ambient>
+            <diffuse>1.0000 1.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="exchange_white">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_exchange_white.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.3800 0.3800 1</ambient>
+            <diffuse>1.0000 1.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="ground_dark">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_ground_dark.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.0553 0.0553 0.0553 1</ambient>
+            <diffuse>0.0723 0.0723 0.0723 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="ground_team_blue">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_ground_team_blue.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.0300 0.0300 0.3800 1</ambient>
+            <diffuse>0.0000 0.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="ground_team_red">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_ground_team_red.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.0300 0.0300 1</ambient>
+            <diffuse>1.0000 0.0000 0.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="ground_white">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_ground_white.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.3800 0.3800 1</ambient>
+            <diffuse>1.0000 1.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="highland_gray">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_highland_gray.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.1858 0.1858 0.1858 1</ambient>
+            <diffuse>0.4452 0.4452 0.4452 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="highland_green">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_highland_green.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.0634 0.2653 0.0795 1</ambient>
+            <diffuse>0.0953 0.6724 0.1413 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="highland_team_blue">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_highland_team_blue.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.0300 0.0300 0.3800 1</ambient>
+            <diffuse>0.0000 0.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="highland_team_red">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_highland_team_red.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.0300 0.0300 1</ambient>
+            <diffuse>1.0000 0.0000 0.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="platform_blue">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_platform_blue.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.0300 0.0300 0.3800 1</ambient>
+            <diffuse>0.0000 0.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="platform_red">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_platform_red.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.0300 0.0300 1</ambient>
+            <diffuse>1.0000 0.0000 0.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+        <visual name="rune_stand_white">
+          <geometry><mesh><uri>model://robomini_field/meshes/field_visual_rune_stand_white.obj</uri></mesh></geometry>
+          <material>
+            <ambient>0.3800 0.3800 0.3800 1</ambient>
+            <diffuse>1.0000 1.0000 1.0000 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+    </link>
+  </model>
+</sdf>

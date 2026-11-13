@@ -1,0 +1,17 @@
+# 强制切换能量机关打靶模式（测试/演示用），服务 /rune/set_mode
+#
+# 请求：
+#   mode  : fixed / random_fixed / small / big
+#   a     : 仅 big 模式使用，振幅，合法范围 [0.780, 1.045]；传 0（或负数）表示在合法范围内随机
+#   omega : 仅 big 模式使用，角频率，合法范围 [1.884, 2.000]；传 0（或负数）表示在合法范围内随机
+#
+# 响应：
+#   success : 是否成功切换
+#   message : 结果说明（成功时包含生效的模式/参数）
+
+string mode
+float64 a
+float64 omega
+---
+bool success
+string message

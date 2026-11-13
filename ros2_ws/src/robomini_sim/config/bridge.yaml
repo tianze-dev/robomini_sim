@@ -1,0 +1,86 @@
+# ros_gz_bridge parameter_bridge 配置（ROS 2 <-> Gazebo 接口桥接）
+#
+# 用法（launch/sim.launch.py 会自动按 side / world_name 生成一份临时副本）：
+#   ros2 run ros_gz_bridge parameter_bridge --ros-args -p config_file:=<本文件>
+#
+# 说明：
+# * 本文件按 **蓝方 + world 名 robomini** 写死；launch 会把 "launcher_blue" 替换成
+#   "launcher_red"（side:=red）并把 "world/robomini" 替换成实际 world 名（world_name 参数）。
+# * gz 侧 JSON 话题全部是 gz.msgs.StringMsg，ROS 侧 std_msgs/String（已验证 ros_gz_bridge 支持）。
+# * 方向：GZ_TO_ROS = gz -> ROS，ROS_TO_GZ = ROS -> gz。
+
+# ---------------------------------------------------------------- 时钟 / 相机
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/image_raw"
+  gz_topic_name: "/world/robomini/model/launcher_blue/link/pitch_link/sensor/camera/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/camera_info"
+  gz_topic_name: "/world/robomini/model/launcher_blue/link/pitch_link/sensor/camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# ---------------------------------------------------------------- IMU（仿真内部）
+# pitch_link IMU，200 Hz，仅用于 launcher_node 生成 /gimbal_to_vision.q；
+# 不是视觉下发接口的一部分，算法侧不应订阅（q 已合并进 GimbalToVision）。
+- ros_topic_name: "/sim/launcher_imu"
+  gz_topic_name: "/world/robomini/model/launcher_blue/link/pitch_link/sensor/imu/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+
+# ---------------------------------------------------------------- 能量机关 JSON
+# ROS -> gz：裁判节点下发模式（转速）与灯效
+- ros_topic_name: "/rune/blue/mode"
+  gz_topic_name: "/rune/blue/mode"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/rune/blue/lights"
+  gz_topic_name: "/rune/blue/lights"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: ROS_TO_GZ
+
+# gz -> ROS：插件上报命中/实际状态
+- ros_topic_name: "/rune/blue/hit"
+  gz_topic_name: "/rune/blue/hit"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/rune/blue/state"
+  gz_topic_name: "/rune/blue/state"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: GZ_TO_ROS
+
+# ---------------------------------------------------------------- 发射架 JSON
+# ROS -> gz：云台目标角、发射指令
+- ros_topic_name: "/launcher/blue/gimbal"
+  gz_topic_name: "/launcher/blue/gimbal"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/launcher/blue/fire"
+  gz_topic_name: "/launcher/blue/fire"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: ROS_TO_GZ
+
+# gz -> ROS：发射架实际状态
+- ros_topic_name: "/launcher/blue/state"
+  gz_topic_name: "/launcher/blue/state"
+  ros_type_name: "std_msgs/msg/String"
+  gz_type_name: "gz.msgs.StringMsg"
+  direction: GZ_TO_ROS
